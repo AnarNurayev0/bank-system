@@ -3,9 +3,11 @@ package bank.bank.service.impl;
 import bank.bank.dto.*;
 import bank.bank.entity.Card;
 import bank.bank.entity.Customer;
+import bank.bank.entity.ResetPinCode;
 import bank.bank.entity.TransactionHistory;
 import bank.bank.repository.CardRepository;
 import bank.bank.repository.CustomerRepository;
+import bank.bank.repository.ResetPinCodeRepository;
 import bank.bank.repository.TransactionHistoryRepository;
 import bank.bank.service.ICardService;
 import bank.bank.util.CardUtil;
@@ -25,6 +27,7 @@ public class CardServiceImpl implements ICardService {
     private final CustomerRepository customerRepository;
     private final CardRepository cardRepository;
     private final TransactionHistoryRepository historyRepository;
+    private final ResetPinCodeRepository resetPinCodeRepository;
     private final EmailServiceImpl emailServiceImpl;
 
     @Override
@@ -33,24 +36,20 @@ public class CardServiceImpl implements ICardService {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer tapılmadı"));
 
-        int age = Period.between(
-                customer.getBirthDate().toInstant()
+        int age = Period.between(customer.getBirthDate().toInstant()
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate(),
-                LocalDate.now()
-        ).getYears();
+                LocalDate.now()).getYears();
 
         if (age < 18) {
-            throw new RuntimeException("Customer 18 yaşından kiçikdir, kart açıla bilməz");
+            throw new RuntimeException("Customer 18 yaşından kiçikdir.");
         }
 
         Card card = new Card();
         card.setCustomer(customer);
-
         card.setCardNumber(CardUtil.generateCardNumber());
         card.setCvv(CardUtil.generateCVV());
         card.setExpirationDate(CardUtil.generateExpirationDate());
-
         card.setCardBrand(dtoCardIU.getCardBrand());
         card.setCardType(dtoCardIU.getCardType());
         card.setCardPassword(dtoCardIU.getCardPassword());
@@ -69,6 +68,7 @@ public class CardServiceImpl implements ICardService {
         );
     }
 
+
     @Override
     public String transfer(DtoTransferRequest request) {
 
@@ -79,7 +79,7 @@ public class CardServiceImpl implements ICardService {
                 .orElseThrow(() -> new RuntimeException("Alan kart tapılmadı"));
 
         if (!from.getCardPassword().equals(request.getCardPassword())) {
-            throw new RuntimeException("Kart şifrəsi yanlışdır");
+            throw new RuntimeException("PIN yanlışdır");
         }
 
         BigDecimal amount = request.getAmount();
@@ -106,25 +106,14 @@ public class CardServiceImpl implements ICardService {
         emailServiceImpl.send(
                 from.getCustomer().getEmail(),
                 "Transfer Təsdiqi",
-                "Hörmətli " + from.getCustomer().getFullName() + ",\n\n" +
-                        "Siz " + to.getCustomer().getFullName() + " adlı istifadəçiyə "
-                        + amount + " " + from.getCurrency() + " məbləğində vəsait göndərdiniz.\n" +
-                        "Yeni balansınız: " + from.getBalance() + " " + from.getCurrency() + "\n\n" +
-                        "Tarix: " + LocalDateTime.now() + "\n" +
-                        "Əməliyyat tipi: Transfer Out\n\n" +
-                        "Əgər bu əməliyyatı siz etməmisinizsə, dərhal banka müraciət edin.\n\n" +
-                        "Bank System"
+                "Siz " + amount + " " + from.getCurrency()
+                        + " göndərdiniz. Yeni balans: " + from.getBalance()
         );
 
         emailServiceImpl.send(
                 to.getCustomer().getEmail(),
-                "Hesabınıza vəsait əlavə olundu",
-                "Hörmətli " + to.getCustomer().getFullName() + ",\n\n" +
-                        "Kartınıza " + from.getCustomer().getFullName() + " tərəfindən "
-                        + convertedAmount + " " + to.getCurrency() + " məbləğində vəsait daxil olmuşdur.\n\n" +
-                        "Tarix: " + LocalDateTime.now() + "\n" +
-                        "Əməliyyat tipi: Transfer In\n\n" +
-                        "Bank System"
+                "Vəsait daxil oldu",
+                "Hesabınıza " + convertedAmount + " " + to.getCurrency() + " daxil oldu."
         );
 
         TransactionHistory out = new TransactionHistory();
@@ -149,17 +138,18 @@ public class CardServiceImpl implements ICardService {
         in.setType("TRANSFER_IN");
         historyRepository.save(in);
 
-        return "Transfer uğurla tamamlandı";
+        return "Transfer uğurla tamamlandı.";
     }
+
 
     @Override
     public String withdraw(DtoWithdrawRequest request) {
 
         Card from = cardRepository.findByCardNumber(request.getFromCardNumber())
-                .orElseThrow(() -> new RuntimeException("Göndərən kart tapılmadı"));
+                .orElseThrow(() -> new RuntimeException("Kart tapılmadı"));
 
         if (!from.getCardPassword().equals(request.getCardPassword())) {
-            throw new RuntimeException("Kart şifrəsi yanlışdır");
+            throw new RuntimeException("PIN yanlışdır");
         }
 
         BigDecimal amount = request.getAmount();
@@ -173,14 +163,8 @@ public class CardServiceImpl implements ICardService {
 
         emailServiceImpl.send(
                 from.getCustomer().getEmail(),
-                "Pul Çıxarışı Təsdiqi",
-                "Hörmətli " + from.getCustomer().getFullName() + ",\n\n" +
-                        "Kartınızdan " + amount + " " + from.getCurrency() + " məbləğində pul çıxışı edilmişdir.\n" +
-                        "Yeni balans: " + from.getBalance() + " " + from.getCurrency() + "\n\n" +
-                        "Tarix: " + LocalDateTime.now() + "\n" +
-                        "Əməliyyat tipi: Withdraw\n\n" +
-                        "Əgər bu əməliyyatı siz etməmisinizsə, dərhal banka müraciət edin.\n\n" +
-                        "Bank System"
+                "Pul Çıxarışı",
+                "Kartınızdan " + amount + " " + from.getCurrency() + " çıxıldı."
         );
 
         TransactionHistory h = new TransactionHistory();
@@ -192,38 +176,99 @@ public class CardServiceImpl implements ICardService {
         h.setType("WITHDRAW");
         historyRepository.save(h);
 
-        return "Withdraw uğurla yerinə yetirildi.";
+        return "Withdraw uğurla tamamlandı.";
     }
 
+
     @Override
-    public String resetPinSimple(DtoPinResetSimpleRequest request) {
+    public String startPinReset(DtoPinResetStartRequest request) {
+
         Card card = cardRepository.findByCardNumber(request.getCardNumber())
                 .orElseThrow(() -> new RuntimeException("Kart tapılmadı"));
 
-        Customer customer = card.getCustomer();
+        String email = card.getCustomer().getEmail();
 
-        if (!customer.getEmail().equals(request.getEmail())) {
-            throw new RuntimeException("Email kart sahibinə məxsus deyil");
+        String code = String.valueOf((int) (Math.random() * 900000 + 100000));
+
+        resetPinCodeRepository.findByCardIdAndEmail(card.getId(), email)
+                .ifPresent(resetPinCodeRepository::delete);
+
+        ResetPinCode reset = new ResetPinCode();
+        reset.setCardId(card.getId());
+        reset.setEmail(email);
+        reset.setCode(code);
+        reset.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+
+        resetPinCodeRepository.save(reset);
+
+        emailServiceImpl.send(
+                email,
+                "PIN Reset Kodu",
+                "Sizin PIN yeniləmə kodunuz: " + code
+        );
+
+        return "Təsdiq kodu emailə göndərildi.";
+    }
+
+
+
+    @Override
+    public String verifyPinReset(DtoPinResetVerify request) {
+
+        Card card = cardRepository.findByCardNumber(request.getCardNumber())
+                .orElseThrow(() -> new RuntimeException("Kart tapılmadı"));
+
+        ResetPinCode reset = resetPinCodeRepository
+                .findByCardIdAndEmail(card.getId(), request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Kod tapılmadı."));
+
+        if (reset.getExpiresAt().isBefore(LocalDateTime.now())) {
+            resetPinCodeRepository.delete(reset);
+            throw new RuntimeException("Kodun vaxtı bitib.");
         }
 
-        if (!customer.getEmailPassword().equals(request.getEmailPassword())) {
-            throw new RuntimeException("Email şifrəsi yanlışdır");
+        if (!reset.getCode().equals(request.getCode())) {
+            throw new RuntimeException("Kod yanlışdır.");
         }
+
+        return "Kod təsdiqləndi.";
+    }
+
+
+
+    @Override
+    public String confirmPinReset(DtoPinResetConfirm request) {
+
+        Card card = cardRepository.findByCardNumber(request.getCardNumber())
+                .orElseThrow(() -> new RuntimeException("Kart tapılmadı"));
+
+        ResetPinCode reset = resetPinCodeRepository
+                .findByCardIdAndEmail(card.getId(), request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Təsdiq tapılmadı."));
 
         if (request.getNewPin().length() != 4) {
-            throw new RuntimeException("PIN 4 rəqəmdən ibarət olmalıdır");
+            throw new RuntimeException("PIN 4 rəqəm olmalıdır.");
         }
 
         card.setCardPassword(request.getNewPin());
         cardRepository.save(card);
 
+        resetPinCodeRepository.delete(reset);
+
         TransactionHistory h = new TransactionHistory();
         h.setOwnerCardId(card.getId());
         h.setFromCardNumber(card.getCardNumber());
-        h.setFromCustomerName(customer.getFullName());
-        h.setType("PIN_RESET_SIMPLE");
+        h.setFromCustomerName(card.getCustomer().getFullName());
+        h.setType("PIN_RESET");
         historyRepository.save(h);
 
-        return "PIN uğurla yeniləndi";
+        emailServiceImpl.send(
+                card.getCustomer().getEmail(),
+                "PIN Yeniləndi",
+                "PIN uğurla yeniləndi."
+        );
+
+        return "PIN uğurla yeniləndi.";
     }
+
 }

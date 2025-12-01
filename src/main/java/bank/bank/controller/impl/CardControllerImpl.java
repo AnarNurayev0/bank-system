@@ -15,7 +15,6 @@ import java.util.List;
 @RequestMapping("/card")
 public class CardControllerImpl implements ICardController {
 
-
     private final ICardService cardService;
     private final TransactionHistoryRepository historyRepository;
 
@@ -41,14 +40,21 @@ public class CardControllerImpl implements ICardController {
     @PostMapping("/withdraw")
     public String withdraw(@RequestBody DtoWithdrawRequest request) {
         return cardService.withdraw(request);
-
-    }
-
-    @Override
-    @PostMapping("/pin/reset/simple")
-    public String resetPinSimple(@RequestBody DtoPinResetSimpleRequest request) {
-        return cardService.resetPinSimple(request);
     }
 
 
+    @PostMapping("/pin/reset/start")
+    public String startPinReset(@RequestBody DtoPinResetStartRequest request) {
+        return cardService.startPinReset(request);
+    }
+
+    @PostMapping("/pin/reset/verify")
+    public String verifyPinReset(@RequestBody DtoPinResetVerify request) {
+        return cardService.verifyPinReset(request);
+    }
+
+    @PostMapping("/pin/reset/confirm")
+    public String confirmPinReset(@RequestBody DtoPinResetConfirm request) {
+        return cardService.confirmPinReset(request);
+    }
 }

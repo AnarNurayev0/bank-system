@@ -10,6 +10,12 @@ public interface ICardService {
 
     public String withdraw(DtoWithdrawRequest request);
 
-    String resetPinSimple(DtoPinResetSimpleRequest request);
+    public String startPinReset(DtoPinResetStartRequest request);
+
+    String verifyPinReset(DtoPinResetVerify request);
+
+    String confirmPinReset(DtoPinResetConfirm request);
+
+
 
 }
