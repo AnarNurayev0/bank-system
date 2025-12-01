@@ -1,0 +1,30 @@
+package bank.bank.dto;
+
+import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class DtoTransferRequest {
+
+    @NotBlank(message = "Göndərən kart nömrəsi boş ola bilməz")
+    @Pattern(regexp = "^[0-9]{16}$", message = "Kart nömrəsi yalnız 16 rəqəmdən ibarət olmalıdır")
+    private String fromCardNumber;
+
+    @NotBlank(message = "Alan kart nömrəsi boş ola bilməz")
+    @Pattern(regexp = "^[0-9]{16}$", message = "Kart nömrəsi yalnız 16 rəqəmdən ibarət olmalıdır")
+    private String toCardNumber;
+
+    @NotBlank(message = "Kart şifrəsi boş ola bilməz")
+    @Pattern(regexp = "^[0-9]{4}$", message = "Kart şifrəsi yalnız 4 rəqəmdən ibarət olmalıdır")
+    private String cardPassword;
+
+    @NotNull(message = "Məbləğ boş ola bilməz")
+    @DecimalMin(value = "1.00", message = "Minimim göndərilə bilən məbləğ 1 AZN/USD/EUR olmalıdır")
+    private BigDecimal amount;
+}
