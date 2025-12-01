@@ -17,7 +17,6 @@ public class CardControllerImpl implements ICardController {
 
 
     private final ICardService cardService;
-
     private final TransactionHistoryRepository historyRepository;
 
     @Override
