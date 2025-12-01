@@ -33,7 +33,7 @@ public class CardControllerImpl implements ICardController {
 
     @Override
     @GetMapping("/history/{cardId}")
-    
+
     public List<TransactionHistory> getHistory(@PathVariable Long cardId) {
         return historyRepository.findByOwnerCardIdOrderByCreatedAtDesc(cardId);
     }
