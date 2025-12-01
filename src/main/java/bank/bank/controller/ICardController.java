@@ -15,6 +15,6 @@ public interface ICardController {
 
     public String withdraw(DtoWithdrawRequest request);
 
-    public String resetPinSimple( DtoPinResetSimpleRequest request);
+    public String resetPinSimple(  DtoPinResetSimpleRequest request);
 
 }
