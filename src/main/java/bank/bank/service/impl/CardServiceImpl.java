@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.ZoneId;
 
@@ -24,7 +25,7 @@ public class CardServiceImpl implements ICardService {
     private final CustomerRepository customerRepository;
     private final CardRepository cardRepository;
     private final TransactionHistoryRepository historyRepository;
-    private final EmailService emailService;
+    private final EmailServiceImpl emailServiceImpl;
 
     @Override
     public DtoCard createCard(Long customerId, DtoCardIU dtoCardIU) {
@@ -82,7 +83,6 @@ public class CardServiceImpl implements ICardService {
         }
 
         BigDecimal amount = request.getAmount();
-
         BigDecimal convertedAmount = amount;
 
         if (!from.getCurrency().equals(to.getCurrency())) {
@@ -103,6 +103,29 @@ public class CardServiceImpl implements ICardService {
         cardRepository.save(from);
         cardRepository.save(to);
 
+        emailServiceImpl.send(
+                from.getCustomer().getEmail(),
+                "Transfer Təsdiqi",
+                "Hörmətli " + from.getCustomer().getFullName() + ",\n\n" +
+                        "Siz " + to.getCustomer().getFullName() + " adlı istifadəçiyə "
+                        + amount + " " + from.getCurrency() + " məbləğində vəsait göndərdiniz.\n" +
+                        "Yeni balansınız: " + from.getBalance() + " " + from.getCurrency() + "\n\n" +
+                        "Tarix: " + LocalDateTime.now() + "\n" +
+                        "Əməliyyat tipi: Transfer Out\n\n" +
+                        "Əgər bu əməliyyatı siz etməmisinizsə, dərhal banka müraciət edin.\n\n" +
+                        "Bank System"
+        );
+
+        emailServiceImpl.send(
+                to.getCustomer().getEmail(),
+                "Hesabınıza vəsait əlavə olundu",
+                "Hörmətli " + to.getCustomer().getFullName() + ",\n\n" +
+                        "Kartınıza " + from.getCustomer().getFullName() + " tərəfindən "
+                        + convertedAmount + " " + to.getCurrency() + " məbləğində vəsait daxil olmuşdur.\n\n" +
+                        "Tarix: " + LocalDateTime.now() + "\n" +
+                        "Əməliyyat tipi: Transfer In\n\n" +
+                        "Bank System"
+        );
 
         TransactionHistory out = new TransactionHistory();
         out.setOwnerCardId(from.getId());
@@ -148,18 +171,29 @@ public class CardServiceImpl implements ICardService {
         from.setBalance(from.getBalance().subtract(amount));
         cardRepository.save(from);
 
-        emailService.send(
+        emailServiceImpl.send(
                 from.getCustomer().getEmail(),
-                "Pul Çıxarışı",
-                "Hörmətli " + from.getCustomer().getFullName() +
-                        ",\n\nKartınızdan " + amount + " AZN məbləğində pul çıxarılmışdır.\n" +
-                        "Yeni balans: " + from.getBalance() + " AZN\n\n" +
-                        "Bank Sistem"
+                "Pul Çıxarışı Təsdiqi",
+                "Hörmətli " + from.getCustomer().getFullName() + ",\n\n" +
+                        "Kartınızdan " + amount + " " + from.getCurrency() + " məbləğində pul çıxışı edilmişdir.\n" +
+                        "Yeni balans: " + from.getBalance() + " " + from.getCurrency() + "\n\n" +
+                        "Tarix: " + LocalDateTime.now() + "\n" +
+                        "Əməliyyat tipi: Withdraw\n\n" +
+                        "Əgər bu əməliyyatı siz etməmisinizsə, dərhal banka müraciət edin.\n\n" +
+                        "Bank System"
         );
 
-        return "Withdraw uğurludur.";
-    }
+        TransactionHistory h = new TransactionHistory();
+        h.setOwnerCardId(from.getId());
+        h.setFromCardNumber(from.getCardNumber());
+        h.setFromCustomerName(from.getCustomer().getFullName());
+        h.setAmount(amount);
+        h.setConvertedAmount(amount);
+        h.setType("WITHDRAW");
+        historyRepository.save(h);
 
+        return "Withdraw uğurla yerinə yetirildi.";
+    }
 
     @Override
     public String resetPinSimple(DtoPinResetSimpleRequest request) {
@@ -191,6 +225,5 @@ public class CardServiceImpl implements ICardService {
         historyRepository.save(h);
 
         return "PIN uğurla yeniləndi";
-
     }
 }
