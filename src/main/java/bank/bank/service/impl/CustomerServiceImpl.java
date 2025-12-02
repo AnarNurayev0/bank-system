@@ -1,19 +1,19 @@
 package bank.bank.service.impl;
 
+import java.util.List;
+import java.time.Period;
+import java.time.LocalDate;
 import bank.bank.dto.DtoCard;
 import bank.bank.dto.DtoCustomer;
-import bank.bank.dto.DtoCustomerIU;
 import bank.bank.entity.Customer;
-import bank.bank.repository.CustomerRepository;
-import bank.bank.service.ICustomerService;
+import bank.bank.dto.DtoCustomerIU;
+import lombok.RequiredArgsConstructor;
 import bank.bank.service.IEmailService;
 import bank.bank.util.EmailTemplateUtil;
-import lombok.RequiredArgsConstructor;
+import bank.bank.service.ICustomerService;
 import org.springframework.stereotype.Service;
+import bank.bank.repository.CustomerRepository;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
