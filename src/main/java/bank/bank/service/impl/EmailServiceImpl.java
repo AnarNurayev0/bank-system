@@ -1,23 +1,30 @@
 package bank.bank.service.impl;
 
 import bank.bank.service.IEmailService;
-import org.springframework.stereotype.Service;
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class EmailServiceImpl implements IEmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
     @Override
     public void send(String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-        mailSender.send(message);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, true);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("E-poçt göndərilərkən xəta baş verdi", e);
+        }
     }
 }

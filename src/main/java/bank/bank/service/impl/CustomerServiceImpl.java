@@ -1,31 +1,29 @@
 package bank.bank.service.impl;
 
-import java.util.List;
-import java.time.Period;
-import java.time.LocalDate;
 import bank.bank.dto.DtoCard;
 import bank.bank.dto.DtoCustomer;
-import bank.bank.entity.Customer;
 import bank.bank.dto.DtoCustomerIU;
-import bank.bank.service.ICustomerService;
-import org.springframework.stereotype.Service;
+import bank.bank.entity.Customer;
 import bank.bank.repository.CustomerRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import bank.bank.service.ICustomerService;
+import bank.bank.service.IEmailService;
+import bank.bank.util.EmailTemplateUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerServiceImpl implements ICustomerService {
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
+    private final IEmailService emailService;
 
     @Override
     public DtoCustomer createCustomer(DtoCustomerIU dto) {
-
-//        Date - Long version
-//        int age = Period.between(
-//                dto.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-//                LocalDate.now()
-//        ).getYears();
 
         int age = Period.between(dto.getBirthDate(), LocalDate.now()).getYears();
 
@@ -38,7 +36,6 @@ public class CustomerServiceImpl implements ICustomerService {
         c.setEmail(dto.getEmail());
         c.setEmailPassword(dto.getEmailPassword());
         c.setTelephone(dto.getTelephone());
-//        c.setBirthDate(dto.getBirthDate());  date - long version
         c.setBirthDate(dto.getBirthDate());
 
         Customer saved = customerRepository.save(c);
@@ -47,9 +44,20 @@ public class CustomerServiceImpl implements ICustomerService {
         out.setFullName(saved.getFullName());
         out.setEmail(saved.getEmail());
         out.setTelephone(saved.getTelephone());
-//        out.setBirthDate(saved.getBirthDate()); date - version
         out.setBirthDate(saved.getBirthDate());
 
+        String emailContent = "Hörmətli " + saved.getFullName() + ",<br><br>" +
+                "Bankımızda uğurla qeydiyyatdan keçdiniz.<br><br>" +
+                "Sizə xidmət göstərməkdən məmnunluq duyuruq.<br><br>" +
+                "Hörmətlə,<br>" +
+                "Bank";
+
+        emailService.send(
+                saved.getEmail(),
+                "Bankımıza Xoş Gəlmisiniz!",
+                EmailTemplateUtil.getFormattedEmail(emailContent)
+        );
+        
         return out;
     }
 

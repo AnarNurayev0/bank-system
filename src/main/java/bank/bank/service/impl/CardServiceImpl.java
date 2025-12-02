@@ -1,23 +1,26 @@
 package bank.bank.service.impl;
 
 import bank.bank.dto.*;
-import java.time.Period;
-import java.time.LocalDate;
-import java.math.BigDecimal;
 import bank.bank.entity.Card;
-import bank.bank.util.CardUtil;
-import java.time.LocalDateTime;
 import bank.bank.entity.Customer;
 import bank.bank.entity.ResetPinCode;
-import bank.bank.service.ICardService;
-import lombok.RequiredArgsConstructor;
-import bank.bank.util.CurrencyRateUtil;
-import bank.bank.repository.CardRepository;
 import bank.bank.entity.TransactionHistory;
-import org.springframework.stereotype.Service;
+import bank.bank.repository.CardRepository;
 import bank.bank.repository.CustomerRepository;
 import bank.bank.repository.ResetPinCodeRepository;
 import bank.bank.repository.TransactionHistoryRepository;
+import bank.bank.service.ICardService;
+import bank.bank.service.IEmailService;
+import bank.bank.util.CardUtil;
+import bank.bank.util.CurrencyRateUtil;
+import bank.bank.util.EmailTemplateUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 
 @Service
 @RequiredArgsConstructor
@@ -27,19 +30,13 @@ public class CardServiceImpl implements ICardService {
     private final CardRepository cardRepository;
     private final TransactionHistoryRepository historyRepository;
     private final ResetPinCodeRepository resetPinCodeRepository;
-    private final EmailServiceImpl emailServiceImpl;
+    private final IEmailService emailService;
 
     @Override
     public DtoCard createCard(Long customerId, DtoCardIU dtoCardIU) {
 
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer tapılmadı"));
-
-
-//        Date - Long version
-//        int age = Period.between(customer.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-//                LocalDate.now()).getYears();
-
 
         int age = Period.between(customer.getBirthDate(), LocalDate.now()).getYears();
 
@@ -59,6 +56,22 @@ public class CardServiceImpl implements ICardService {
         card.setBalance(BigDecimal.ZERO);
 
         cardRepository.save(card);
+
+        String emailContent = "Hörmətli " + customer.getFullName() + ",<br><br>" +
+                "Yeni kartınız uğurla yaradıldı.<br>" +
+                "---------------------------------<br>" +
+                "<b>Kart brendi:</b> " + card.getCardBrand() + "<br>" +
+                "<b>Kart növü:</b> " + card.getCardType() + "<br>" +
+                "<b>Kart nömrəsi:</b> " + card.getCardNumber() + "<br>" +
+                "<b>Son istifadə tarixi:</b> " + card.getExpirationDate() + "<br>" +
+                "---------------------------------<br><br>" +
+                "Bank xidmətlərimizdən istifadə etdiyiniz üçün təşəkkür edirik!";
+
+        emailService.send(
+                card.getCustomer().getEmail(),
+                "Yeni Kartınız Uğurla Yaradıldı",
+                EmailTemplateUtil.getFormattedEmail(emailContent)
+        );
 
         return new DtoCard(
                 card.getCardBrand(),
@@ -105,18 +118,42 @@ public class CardServiceImpl implements ICardService {
         cardRepository.save(from);
         cardRepository.save(to);
 
-        emailServiceImpl.send(
+        String fromEmailContent = "Hörmətli " + from.getCustomer().getFullName() + ",<br><br>" +
+                "Kartınızdan pul köçürülməsi həyata keçirildi.<br>" +
+                "<b>Əməliyyat detalları:</b><br>" +
+                "---------------------------------<br>" +
+                "<b>Göndərilən məbləğ:</b> " + amount + " " + from.getCurrency() + "<br>" +
+                "<b>Alan şəxs:</b> " + to.getCustomer().getFullName() + "<br>" +
+                "<b>Alan kart:</b> " + to.getCardNumber() + "<br>" +
+                "<b>Tarix:</b> " + LocalDateTime.now() + "<br>" +
+                "---------------------------------<br>" +
+                "<b>Yeni balansınız:</b> " + from.getBalance() + " " + from.getCurrency() + "<br><br>" +
+                "Əgər siz bu əməliyyatı etməmisinizsə, dərhal bankla əlaqə saxlayın.";
+
+        emailService.send(
                 from.getCustomer().getEmail(),
                 "Transfer Təsdiqi",
-                "Siz " + amount + " " + from.getCurrency()
-                        + " göndərdiniz. Yeni balans: " + from.getBalance()
+                EmailTemplateUtil.getFormattedEmail(fromEmailContent)
         );
 
-        emailServiceImpl.send(
+        String toEmailContent = "Hörmətli " + to.getCustomer().getFullName() + ",<br><br>" +
+                "Kartınıza yeni vəsait daxil olmuşdur.<br>" +
+                "<b>Əməliyyat detalları:</b><br>" +
+                "---------------------------------<br>" +
+                "<b>Mənbə kart:</b> " + from.getCardNumber() + "<br>" +
+                "<b>Mənbə şəxs:</b> " + from.getCustomer().getFullName() + "<br>" +
+                "<b>Göndərilən məbləğ:</b> " + convertedAmount + " " + to.getCurrency() + "<br>" +
+                "<b>Tarix:</b> " + LocalDateTime.now() + "<br>" +
+                "---------------------------------<br>" +
+                "Balansınız yenilənmişdir.<br><br>" +
+                "Təşəkkür edirik!";
+
+        emailService.send(
                 to.getCustomer().getEmail(),
-                "Vəsait daxil oldu",
-                "Hesabınıza " + convertedAmount + " " + to.getCurrency() + " daxil oldu."
+                "Hesabınıza Vəsait Daxil Oldu",
+                EmailTemplateUtil.getFormattedEmail(toEmailContent)
         );
+
 
         TransactionHistory out = new TransactionHistory();
         out.setOwnerCardId(from.getId());
@@ -163,11 +200,21 @@ public class CardServiceImpl implements ICardService {
         from.setBalance(from.getBalance().subtract(amount));
         cardRepository.save(from);
 
-        emailServiceImpl.send(
+        String emailContent = "Hörmətli " + from.getCustomer().getFullName() + ",<br><br>" +
+                "Kartınızdan pul çıxarışı uğurla həyata keçirildi.<br>" +
+                "---------------------------------<br>" +
+                "<b>Çıxarılan məbləğ:</b> " + amount + " " + from.getCurrency() + "<br>" +
+                "<b>Tarix:</b> " + LocalDateTime.now() + "<br>" +
+                "<b>Yeni balans:</b> " + from.getBalance() + " " + from.getCurrency() + "<br>" +
+                "---------------------------------<br><br>" +
+                "Əməliyyatı siz etməmisinizsə bankla əlaqə saxlayın.";
+
+        emailService.send(
                 from.getCustomer().getEmail(),
                 "Pul Çıxarışı",
-                "Kartınızdan " + amount + " " + from.getCurrency() + " çıxıldı."
+                EmailTemplateUtil.getFormattedEmail(emailContent)
         );
+
 
         TransactionHistory h = new TransactionHistory();
         h.setOwnerCardId(from.getId());
@@ -203,15 +250,22 @@ public class CardServiceImpl implements ICardService {
 
         resetPinCodeRepository.save(reset);
 
-        emailServiceImpl.send(
+        String emailContent = "Hörmətli " + card.getCustomer().getFullName() + ",<br><br>" +
+                "PIN yeniləmək üçün təsdiq kodunuz:<br>" +
+                "---------------------------------<br>" +
+                "<b>" + code + "</b><br>" +
+                "---------------------------------<br><br>" +
+                "Bu kod 5 dəqiqə ərzində keçərlidir.";
+
+        emailService.send(
                 email,
-                "PIN Reset Kodu",
-                "Sizin PIN yeniləmə kodunuz: " + code
+                "PIN Yeniləmə Kodu",
+                EmailTemplateUtil.getFormattedEmail(emailContent)
         );
+
 
         return "Təsdiq kodu emailə göndərildi.";
     }
-
 
 
     @Override
@@ -235,7 +289,6 @@ public class CardServiceImpl implements ICardService {
 
         return "Kod təsdiqləndi.";
     }
-
 
 
     @Override
@@ -264,11 +317,20 @@ public class CardServiceImpl implements ICardService {
         h.setType("PIN_RESET");
         historyRepository.save(h);
 
-        emailServiceImpl.send(
+        String emailContent = "Hörmətli " + card.getCustomer().getFullName() + ",<br><br>" +
+                "Kartınız üçün yeni PIN kod uğurla təyin edildi.<br>" +
+                "---------------------------------<br>" +
+                "<b>Kart nömrəsi:</b> " + card.getCardNumber() + "<br>" +
+                "<b>Tarix:</b> " + LocalDateTime.now() + "<br>" +
+                "---------------------------------<br><br>" +
+                "Bu əməliyyatı siz etməmisinizsə bankla əlaqə saxlayın.";
+
+        emailService.send(
                 card.getCustomer().getEmail(),
-                "PIN Yeniləndi",
-                "PIN uğurla yeniləndi."
+                "PIN Uğurla Yeniləndi",
+                EmailTemplateUtil.getFormattedEmail(emailContent)
         );
+
 
         return "PIN uğurla yeniləndi.";
     }
