@@ -1,11 +1,10 @@
 package bank.bank.dto;
 
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.*;
 
 @Data
 @NoArgsConstructor

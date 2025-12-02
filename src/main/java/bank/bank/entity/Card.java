@@ -1,15 +1,15 @@
 package bank.bank.entity;
 
-import bank.bank.entity.enums.CardBrand;
+import lombok.Data;
+import java.util.Date;
+import java.math.BigDecimal;
+import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import bank.bank.entity.enums.CardType;
 import bank.bank.entity.enums.Currency;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import bank.bank.entity.enums.CardBrand;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.math.BigDecimal;
-import java.util.Date;
 
 @Data
 @Entity

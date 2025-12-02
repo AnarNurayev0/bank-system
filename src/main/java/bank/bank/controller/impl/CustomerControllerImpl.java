@@ -1,12 +1,12 @@
 package bank.bank.controller.impl;
 
-import bank.bank.controller.ICustomerController;
+import jakarta.validation.Valid;
 import bank.bank.dto.DtoCustomer;
 import bank.bank.dto.DtoCustomerIU;
 import bank.bank.service.ICustomerService;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import bank.bank.controller.ICustomerController;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/customer")

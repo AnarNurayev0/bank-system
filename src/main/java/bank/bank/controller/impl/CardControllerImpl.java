@@ -1,14 +1,14 @@
 package bank.bank.controller.impl;
 
-import bank.bank.controller.ICardController;
+import java.util.List;
 import bank.bank.dto.*;
-import bank.bank.entity.TransactionHistory;
-import bank.bank.repository.TransactionHistoryRepository;
 import bank.bank.service.ICardService;
 import lombok.RequiredArgsConstructor;
+import bank.bank.entity.TransactionHistory;
+import bank.bank.controller.ICardController;
 import org.springframework.web.bind.annotation.*;
+import bank.bank.repository.TransactionHistoryRepository;
 
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -42,17 +42,19 @@ public class CardControllerImpl implements ICardController {
         return cardService.withdraw(request);
     }
 
-
+    @Override
     @PostMapping("/pin/reset/start")
     public String startPinReset(@RequestBody DtoPinResetStartRequest request) {
         return cardService.startPinReset(request);
     }
 
+    @Override
     @PostMapping("/pin/reset/verify")
     public String verifyPinReset(@RequestBody DtoPinResetVerify request) {
         return cardService.verifyPinReset(request);
     }
 
+    @Override
     @PostMapping("/pin/reset/confirm")
     public String confirmPinReset(@RequestBody DtoPinResetConfirm request) {
         return cardService.confirmPinReset(request);

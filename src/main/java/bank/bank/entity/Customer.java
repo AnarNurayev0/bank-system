@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.cglib.core.Local;
+
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -31,7 +34,7 @@ public class Customer {
     private String telephone;
 
     @Column(name = "birth_date")
-    private Date birthDate;
+    private LocalDate birthDate;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<Card> cards;

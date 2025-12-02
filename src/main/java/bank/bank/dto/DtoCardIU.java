@@ -1,15 +1,14 @@
 package bank.bank.dto;
 
-import bank.bank.entity.enums.CardBrand;
-import bank.bank.entity.enums.CardType;
-import bank.bank.entity.enums.Currency;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import bank.bank.entity.enums.CardType;
+import bank.bank.entity.enums.Currency;
+import bank.bank.entity.enums.CardBrand;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 @NoArgsConstructor

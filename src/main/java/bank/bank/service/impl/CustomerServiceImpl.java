@@ -1,17 +1,16 @@
 package bank.bank.service.impl;
 
+import java.util.List;
+import java.time.Period;
+import java.time.LocalDate;
 import bank.bank.dto.DtoCard;
 import bank.bank.dto.DtoCustomer;
-import bank.bank.dto.DtoCustomerIU;
 import bank.bank.entity.Customer;
-import bank.bank.repository.CustomerRepository;
+import bank.bank.dto.DtoCustomerIU;
 import bank.bank.service.ICustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
-import java.util.List;
+import bank.bank.repository.CustomerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class CustomerServiceImpl implements ICustomerService {
@@ -22,10 +21,13 @@ public class CustomerServiceImpl implements ICustomerService {
     @Override
     public DtoCustomer createCustomer(DtoCustomerIU dto) {
 
-        int age = Period.between(
-                dto.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                LocalDate.now()
-        ).getYears();
+//        Date - Long version
+//        int age = Period.between(
+//                dto.getBirthDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+//                LocalDate.now()
+//        ).getYears();
+
+        int age = Period.between(dto.getBirthDate(), LocalDate.now()).getYears();
 
         if (age < 18) {
             throw new RuntimeException("18 yaşdan aşağı qeydiyyata icazə verilmir");
@@ -36,6 +38,7 @@ public class CustomerServiceImpl implements ICustomerService {
         c.setEmail(dto.getEmail());
         c.setEmailPassword(dto.getEmailPassword());
         c.setTelephone(dto.getTelephone());
+//        c.setBirthDate(dto.getBirthDate());  date - long version
         c.setBirthDate(dto.getBirthDate());
 
         Customer saved = customerRepository.save(c);
@@ -44,6 +47,7 @@ public class CustomerServiceImpl implements ICustomerService {
         out.setFullName(saved.getFullName());
         out.setEmail(saved.getEmail());
         out.setTelephone(saved.getTelephone());
+//        out.setBirthDate(saved.getBirthDate()); date - version
         out.setBirthDate(saved.getBirthDate());
 
         return out;

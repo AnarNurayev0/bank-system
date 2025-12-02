@@ -1,11 +1,13 @@
 package bank.bank.dto;
 
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import java.time.LocalDate;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
+import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 @NoArgsConstructor
@@ -32,5 +34,5 @@ public class DtoCustomerIU {
     private String telephone;
 
     @NotNull(message = "Doğum tarixi boş ola bilməz")
-    private Date birthDate;
+    private LocalDate birthDate;
 }

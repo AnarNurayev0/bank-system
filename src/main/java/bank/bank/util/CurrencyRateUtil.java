@@ -20,4 +20,5 @@ public class CurrencyRateUtil {
 
         throw new RuntimeException("Bu valyuta cütlüyü dəstəklənmir");
     }
+
 }
