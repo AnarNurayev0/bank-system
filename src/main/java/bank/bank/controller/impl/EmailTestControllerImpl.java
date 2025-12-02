@@ -1,16 +1,18 @@
 package bank.bank.controller.impl;
 
-import bank.bank.service.impl.EmailServiceImpl;
 import bank.bank.controller.IEmailTestController;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import bank.bank.service.impl.EmailServiceImpl;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/test")
 public class EmailTestControllerImpl implements IEmailTestController {
 
-    @Autowired
-    private EmailServiceImpl emailServiceImpl;
+    private final EmailServiceImpl emailServiceImpl;
 
     @Override
     @GetMapping("/email")

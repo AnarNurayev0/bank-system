@@ -1,19 +1,19 @@
 package bank.bank.controller.impl;
 
-import jakarta.validation.Valid;
+import bank.bank.controller.ICustomerController;
 import bank.bank.dto.DtoCustomer;
 import bank.bank.dto.DtoCustomerIU;
 import bank.bank.service.ICustomerService;
-import bank.bank.controller.ICustomerController;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/customer")
 public class CustomerControllerImpl implements ICustomerController {
 
-    @Autowired
-    private ICustomerService customerService;
+    private final ICustomerService customerService;
 
     @Override
     @PostMapping("/create")

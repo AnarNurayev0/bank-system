@@ -4,13 +4,13 @@ import bank.bank.dto.*;
 
 public interface ICardService {
 
-    public DtoCard createCard(Long customerId, DtoCardIU dto);
+    DtoCard createCard(Long customerId, DtoCardIU dto);
 
-    public String transfer(DtoTransferRequest request);
+    String transfer(DtoTransferRequest request);
 
-    public String withdraw(DtoWithdrawRequest request);
+    String withdraw(DtoWithdrawRequest request);
 
-    public String startPinReset(DtoPinResetStartRequest request);
+    String startPinReset(DtoPinResetStartRequest request);
 
     String verifyPinReset(DtoPinResetVerify request);
 

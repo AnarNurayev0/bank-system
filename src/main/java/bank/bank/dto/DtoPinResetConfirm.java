@@ -8,7 +8,10 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DtoPinResetConfirm {
+
     private String cardNumber;
+
     private String email;
+
     private String newPin;
 }

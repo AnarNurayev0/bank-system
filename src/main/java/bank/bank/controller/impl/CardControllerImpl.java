@@ -9,7 +9,6 @@ import bank.bank.controller.ICardController;
 import org.springframework.web.bind.annotation.*;
 import bank.bank.repository.TransactionHistoryRepository;
 
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/card")
