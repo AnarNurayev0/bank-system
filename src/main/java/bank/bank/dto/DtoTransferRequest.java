@@ -12,7 +12,10 @@ import jakarta.validation.constraints.*;
 public class DtoTransferRequest {
 
     @NotBlank(message = "Göndərən kart nömrəsi boş ola bilməz")
-    @Pattern(regexp = "^[0-9]{16}$", message = "Kart nömrəsi yalnız 16 rəqəmdən ibarət olmalıdır")
+    @Pattern(
+            regexp = "^(CASHBACK|[0-9]{16})$",
+            message = "Kart nömrəsi 16 rəqəm və ya CASHBACK olmalıdır"
+    )
     private String fromCardNumber;
 
     @NotBlank(message = "Alan kart nömrəsi boş ola bilməz")

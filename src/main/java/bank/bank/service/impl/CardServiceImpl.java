@@ -5,6 +5,7 @@ import java.time.Period;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 import bank.bank.entity.Card;
+import bank.bank.repository.*;
 import bank.bank.util.CardUtil;
 import java.time.LocalDateTime;
 import bank.bank.entity.Customer;
@@ -15,17 +16,16 @@ import bank.bank.service.IEmailService;
 import bank.bank.util.CurrencyRateUtil;
 import bank.bank.util.EmailTemplateUtil;
 import bank.bank.entity.TransactionHistory;
-import bank.bank.repository.CardRepository;
 import org.springframework.stereotype.Service;
-import bank.bank.repository.CustomerRepository;
-import bank.bank.repository.TransactionHistoryRepository;
-import bank.bank.repository.ResetPinCodeRepository;
+import bank.bank.entity.enums.CardType;
+import bank.bank.entity.PayProvider;
 
 
 @Service
 @RequiredArgsConstructor
 public class CardServiceImpl implements ICardService {
 
+    private final PayProviderRepository payProviderRepository;
     private final CustomerRepository customerRepository;
     private final CardRepository cardRepository;
     private final TransactionHistoryRepository historyRepository;
@@ -87,8 +87,16 @@ public class CardServiceImpl implements ICardService {
     @Override
     public String transfer(DtoTransferRequest request) {
 
-        Card from = cardRepository.findByCardNumber(request.getFromCardNumber())
-                .orElseThrow(() -> new RuntimeException("Göndərən kart tapılmadı"));
+        Card from;
+
+        if ("CASHBACK".equalsIgnoreCase(request.getFromCardNumber())) {
+            from = cardRepository
+                    .findByCardTypeAndCardPassword(CardType.CASHBACK, request.getCardPassword())
+                    .orElseThrow(() -> new RuntimeException("Cashback kart tapılmadı və ya PIN yanlışdır"));
+        } else {
+            from = cardRepository.findByCardNumber(request.getFromCardNumber())
+                    .orElseThrow(() -> new RuntimeException("Göndərən kart tapılmadı"));
+        }
 
         Card to = cardRepository.findByCardNumber(request.getToCardNumber())
                 .orElseThrow(() -> new RuntimeException("Alan kart tapılmadı"));
@@ -184,8 +192,13 @@ public class CardServiceImpl implements ICardService {
     @Override
     public String withdraw(DtoWithdrawRequest request) {
 
+
         Card from = cardRepository.findByCardNumber(request.getFromCardNumber())
                 .orElseThrow(() -> new RuntimeException("Kart tapılmadı"));
+
+        if (from.getCardType() == CardType.CASHBACK) {
+            throw new RuntimeException("Cashback kartdan nağd pul çıxarmaq qadağandır.");
+        }
 
         if (!from.getCardPassword().equals(request.getCardPassword())) {
             throw new RuntimeException("PIN yanlışdır");
@@ -334,5 +347,79 @@ public class CardServiceImpl implements ICardService {
 
         return "PIN uğurla yeniləndi.";
     }
+
+    @Override
+    public String pay(DtoPayRequest request) {
+
+        Card from;
+
+        if ("CASHBACK".equalsIgnoreCase(request.getFromCard())) {
+            from = cardRepository
+                    .findByCardTypeAndCardPassword(CardType.CASHBACK, request.getCardPassword())
+                    .orElseThrow(() -> new RuntimeException("Cashback kart tapılmadı və ya PIN yanlışdır"));
+        } else {
+            from = cardRepository.findByCardNumber(request.getFromCard())
+                    .orElseThrow(() -> new RuntimeException("Göndərən kart tapılmadı"));
+        }
+
+        if (from.getCardType() == CardType.CASHBACK) {
+        }
+
+        PayProvider provider = payProviderRepository
+                .findByNameIgnoreCase(request.getProviderName())
+                .orElseThrow(() -> new RuntimeException("Provider tapılmadı"));
+
+        BigDecimal amount = request.getAmount();
+
+        if (from.getBalance().compareTo(amount) < 0) {
+            throw new RuntimeException("Balans kifayət etmir");
+        }
+
+        from.setBalance(from.getBalance().subtract(amount));
+        cardRepository.save(from);
+
+        BigDecimal cashback = amount
+                .multiply(provider.getCashbackPercent())
+                .divide(BigDecimal.valueOf(100));
+
+        Card cashbackCard = cardRepository
+                .findByCardTypeAndCardPassword(CardType.CASHBACK, from.getCardPassword())
+                .orElseThrow(() -> new RuntimeException("Cashback kart tapılmadı"));
+
+        cashbackCard.setBalance(
+                cashbackCard.getBalance().add(cashback)
+        );
+
+        cardRepository.save(cashbackCard);
+
+        String emailContent =
+                "Hörmətli " + from.getCustomer().getFullName() + ",<br><br>" +
+                        "<b>" + provider.getName() + "</b> üçün ödəniş uğurla tamamlandı.<br>" +
+                        "---------------------------------<br>" +
+                        "<b>Məbləğ:</b> " + amount + " " + from.getCurrency() + "<br>" +
+                        "<b>Cashback:</b> " + cashback + " " + from.getCurrency() + "<br>" +
+                        "<b>Yeni balans:</b> " + from.getBalance() + "<br>" +
+                        "---------------------------------<br>";
+
+        emailService.send(
+                from.getCustomer().getEmail(),
+                "Ödəniş Təsdiqi",
+                EmailTemplateUtil.getFormattedEmail(emailContent)
+        );
+
+        TransactionHistory h = new TransactionHistory();
+        h.setOwnerCardId(from.getId());
+        h.setFromCardNumber(from.getCardNumber());
+        h.setToCardNumber(provider.getName());
+        h.setFromCustomerName(from.getCustomer().getFullName());
+        h.setToCustomerName(provider.getName());
+        h.setAmount(amount);
+        h.setConvertedAmount(amount);
+        h.setType("PAY");
+        historyRepository.save(h);
+
+        return "Ödəniş uğurla həyata keçirildi. Cashback əlavə olundu.";
+    }
+
 
 }

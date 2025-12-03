@@ -3,6 +3,7 @@ package bank.bank.controller.impl;
 import java.util.List;
 import bank.bank.dto.*;
 import bank.bank.service.ICardService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import bank.bank.entity.TransactionHistory;
 import bank.bank.controller.ICardController;
@@ -58,4 +59,10 @@ public class CardControllerImpl implements ICardController {
     public String confirmPinReset(@RequestBody DtoPinResetConfirm request) {
         return cardService.confirmPinReset(request);
     }
+
+    @PostMapping("/pay")
+    public String pay(@RequestBody @Valid DtoPayRequest request) {
+        return cardService.pay(request);
+    }
+
 }

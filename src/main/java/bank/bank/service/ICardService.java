@@ -16,6 +16,6 @@ public interface ICardService {
 
     String confirmPinReset(DtoPinResetConfirm request);
 
-
+    String pay(DtoPayRequest request);
 
 }
