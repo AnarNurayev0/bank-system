@@ -66,14 +66,20 @@ INSERT INTO Account (CustomerID, AccountNumber, Balance, AccountType, Currency, 
 VALUES
 (1, '123456789012', 1500.00, 'debet', 'AZN', 'active', '2030-12-31'),
 (1, '987654321098', 5000.00, 'deposit', 'USD', 'active', '2032-06-30'),
-(2, '112233445566', 250.00, 'kredit', 'AZN', 'active', '2029-11-30');
+(2, '112233445566', 250.00, 'kredit', 'AZN', 'active', '2029-11-30'),
+(3, '223344556677', 800.00, 'debet', 'AZN', 'active', '2031-01-01'),
+(4, '778899001122', 12000.00, 'deposit', 'EUR', 'active', '2033-09-15');
+
 
 -- kartlar
 INSERT INTO Card (AccountID, CardNumber, CVV, ExpireDate, CardType)
 VALUES
 (1, '4111111111111111', '123', '12/26', 'visa'),
 (1, '5500000000000004', '456', '11/25', 'mastercard'),
-(3, '340000000000009',  '789', '01/27', 'american express');
+(3, '340000000000009',  '789', '01/27', 'american express'),
+(4, '4111222233334444', '321', '05/28', 'visa'),
+(5, '5555444433332222', '654', '07/29', 'mastercard');
+
 
 -- transactionlar
 INSERT INTO Transactions (TransactionType, Amount, SenderAccountID, ReceiverAccountID, Note, Status)
@@ -81,7 +87,9 @@ VALUES
 ('deposit',         1000.00, NULL, 1, 'Initial deposit', 'completed'),
 ('transfer',         200.00, 1,    3, 'Payment for services', 'completed'),
 ('cash withdrawal',   50.00, 2,   NULL, 'ATM withdrawal', 'completed'),
-('online payment',    30.00, 1,    2, 'Online shopping', 'pending');
+('online payment',    30.00, 1,    2, 'Online shopping', 'pending'),
+('transfer', 150.00, 4, 1, 'Money send to Əli', 'completed');
 
+select * from Card
 --bu hisseye "select * from Card, Account ve s" yaziriq
 
