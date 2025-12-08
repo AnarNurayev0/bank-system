@@ -1,95 +1,123 @@
--- butun cedvelleri silirik (silmemisden evvel error verirdi run edende)
-DROP TABLE IF EXISTS Transactions CASCADE;
-DROP TABLE IF EXISTS Card CASCADE;
-DROP TABLE IF EXISTS Account CASCADE;
-DROP TABLE IF EXISTS Customer CASCADE;
+-- DROP TABLES IN CORRECT ORDER (DEPENDENCIES FIRST)
+DROP TABLE IF EXISTS transaction_history CASCADE;
+DROP TABLE IF EXISTS card CASCADE;
+DROP TABLE IF EXISTS customer CASCADE;
+DROP TABLE IF EXISTS pay_provider CASCADE;
+DROP TABLE IF EXISTS registration_otp CASCADE;
+DROP TABLE IF EXISTS reset_pin_code CASCADE;
 
-CREATE TABLE Customer (
-    CustomerID SERIAL PRIMARY KEY,
-    FullName VARCHAR(255) NOT NULL,
-    Password VARCHAR(255) NOT NULL,
-    Email VARCHAR(255) UNIQUE NOT NULL,
-    PhoneNumber VARCHAR(20),
-    Address TEXT,
-    BirthDate DATE
+-- 1. CUSTOMER TABLE
+CREATE TABLE customer (
+    id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    email_password VARCHAR(255),
+    telephone VARCHAR(255),
+    birth_date DATE
 );
 
-CREATE INDEX idx_customer_email ON Customer(Email);
-CREATE INDEX idx_customer_phone ON Customer(PhoneNumber);
-
-CREATE TABLE Account (
-    AccountID SERIAL PRIMARY KEY,
-    CustomerID INT REFERENCES Customer(CustomerID) ON DELETE CASCADE,
-    AccountNumber VARCHAR(20) UNIQUE NOT NULL,
-    Balance DECIMAL(15,2) DEFAULT 0,
-    AccountType VARCHAR(20) CHECK (AccountType IN ('debet','kredit','deposit')),
-    Currency VARCHAR(10),
-    Status VARCHAR(10) CHECK (Status IN ('active','blocked')) DEFAULT 'active',
-    ExpireDate DATE
+-- 2. PAY PROVIDER TABLE
+CREATE TABLE pay_provider (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE,
+    description VARCHAR(255),
+    cashback_percent DECIMAL(5,2),
+    active BOOLEAN DEFAULT TRUE
 );
 
-CREATE INDEX idx_account_number ON Account(AccountNumber);
-
-CREATE TABLE Transactions (
-    TransactionID SERIAL PRIMARY KEY,
-    TransactionType VARCHAR(20) CHECK (TransactionType IN ('transfer','online payment','cash withdrawal','deposit')),
-    Amount DECIMAL(15,2) NOT NULL,
-    SenderAccountID INT REFERENCES Account(AccountID),
-    ReceiverAccountID INT REFERENCES Account(AccountID),
-    TransactionDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    Note TEXT,
-    Status VARCHAR(20) CHECK (Status IN ('pending','completed','failed')) DEFAULT 'pending'
+-- 3. REGISTRATION OTP TABLE
+CREATE TABLE registration_otp (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified BOOLEAN DEFAULT FALSE
 );
 
-CREATE TABLE Card (
-    CardID SERIAL PRIMARY KEY,
-    AccountID INT REFERENCES Account(AccountID) ON DELETE CASCADE,
-    CardNumber VARCHAR(20) UNIQUE NOT NULL,
-    CVV VARCHAR(5) NOT NULL,
-    ExpireDate VARCHAR(10),
-    CardType VARCHAR(20) CHECK (CardType IN ('visa','mastercard','american express'))
+-- 4. CARD TABLE
+CREATE TABLE card (
+    id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES customer(id) ON DELETE CASCADE,
+    card_number VARCHAR(255),
+    card_password VARCHAR(255),
+    cvv VARCHAR(255),
+    expiration_date DATE,
+    balance DECIMAL(19,2) DEFAULT 0,
+    credit_limit DECIMAL(19,2) DEFAULT 0,
+    used_limit DECIMAL(19,2) DEFAULT 0,
+    currency VARCHAR(10), -- AZN, USD, EUR
+    card_brand VARCHAR(20), -- VISA, MASTERCARD, AMEX
+    card_type VARCHAR(20), -- DEBIT, CREDIT, CASHBACK
+    status VARCHAR(20) DEFAULT 'ACTIVE'
 );
 
-CREATE INDEX idx_card_number ON Card(CardNumber);
+-- 5. TRANSACTION HISTORY TABLE
+CREATE TABLE transaction_history (
+    id SERIAL PRIMARY KEY,
+    owner_card_id INT, -- Removed FK constraint to allow keeping history if card is deleted, or could add FK
+    from_card_number VARCHAR(255),
+    to_card_number VARCHAR(255),
+    from_customer_name VARCHAR(255),
+    to_customer_name VARCHAR(255),
+    amount DECIMAL(19,2),
+    converted_amount DECIMAL(19,2),
+    type VARCHAR(50), 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- musteriler
-INSERT INTO Customer (FullName, Password, Email, PhoneNumber, Address, BirthDate)
+-- 6. RESET PIN CODE TABLE
+CREATE TABLE reset_pin_code (
+    id SERIAL PRIMARY KEY,
+    card_number VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified BOOLEAN DEFAULT FALSE
+);
+
+-- =============================================
+-- MOCK DATA INSERTS
+-- =============================================
+
+-- Insert Customers
+INSERT INTO customer (full_name, email, email_password, telephone, birth_date)
 VALUES 
-('Əli Vəli', '$2a$12$examplehash', 'ali@example.com', '+994501234567', 'Baku, Azerbaijan', '1995-03-15'),
-('Aysel Məmmədova', '$2a$12$examplehash2', 'aysel@example.com', '+994502345678', 'Baku, Azerbaijan', '1998-07-22'),
-('Banu Zamanova', '$2a$12$examplehash3', 'banu@example.com', '+994503456789', 'Shaki, Azerbaijan', '1993-09-27'),
-('Rza Həsənov', '$2a$12$examplehash4', 'rza@example.com', '+994504567890', 'Ganja, Azerbaijan', '1989-03-21'),
-('Elnarə Əlili', '$2a$12$examplehash5', 'elnare@example.com', '+994505678909', 'Baku, Azerbaijan', '1990-05-13');
+('Anar Nurayev', 'anar@example.com', '12345', '+994501234567', '2000-01-01'),
+('Ali Valiyev', 'ali@example.com', '12345', '+994551234567', '1995-05-15'),
+('Leyla Aliyeva', 'leyla@example.com', '12345', '+994701234567', '1998-08-20');
 
--- hesablar
-INSERT INTO Account (CustomerID, AccountNumber, Balance, AccountType, Currency, Status, ExpireDate)
+-- Insert Pay Providers
+INSERT INTO pay_provider (name, description, cashback_percent, active)
+VALUES 
+('Azercell', 'Mobile Operator', 2.0, true),
+('Bakcell', 'Mobile Operator', 2.0, true),
+('Nar', 'Mobile Operator', 2.0, true),
+('Azerishig', 'Electricity Utility', 1.0, true),
+('Azersu', 'Water Utility', 1.0, true),
+('Azeriqaz', 'Gas Utility', 1.0, true);
+
+-- Insert Cards
+
+-- Anar's Cards
+INSERT INTO card (customer_id, card_number, card_password, cvv, expiration_date, balance, currency, card_brand, card_type, status)
 VALUES
-(1, '123456789012', 1500.00, 'debet', 'AZN', 'active', '2030-12-31'),
-(1, '987654321098', 5000.00, 'deposit', 'USD', 'active', '2032-06-30'),
-(2, '112233445566', 250.00, 'kredit', 'AZN', 'active', '2029-11-30'),
-(3, '223344556677', 800.00, 'debet', 'AZN', 'active', '2031-01-01'),
-(4, '778899001122', 12000.00, 'deposit', 'EUR', 'active', '2033-09-15');
+(1, '4111111111111111', '1234', '123', '2028-12-31', 100.00, 'AZN', 'VISA', 'DEBIT', 'ACTIVE'),
+(1, '5111111111111111', '1234', '456', '2029-06-30', 500.00, 'USD', 'MASTERCARD', 'CREDIT', 'ACTIVE'),
+(1, '370000000000001', '1234', '789', '2030-01-01', 20.00, 'AZN', 'AMEX', 'CASHBACK', 'ACTIVE');
 
-
--- kartlar
-INSERT INTO Card (AccountID, CardNumber, CVV, ExpireDate, CardType)
+-- Ali's Cards
+INSERT INTO card (customer_id, card_number, card_password, cvv, expiration_date, balance, currency, card_brand, card_type, status)
 VALUES
-(1, '4111111111111111', '123', '12/26', 'visa'),
-(1, '5500000000000004', '456', '11/25', 'mastercard'),
-(3, '340000000000009',  '789', '01/27', 'american express'),
-(4, '4111222233334444', '321', '05/28', 'visa'),
-(5, '5555444433332222', '654', '07/29', 'mastercard');
+(2, '4222222222222222', '0000', '111', '2027-11-15', 250.50, 'AZN', 'VISA', 'DEBIT', 'ACTIVE');
 
-
--- transactionlar
-INSERT INTO Transactions (TransactionType, Amount, SenderAccountID, ReceiverAccountID, Note, Status)
+-- Leyla's Cards
+INSERT INTO card (customer_id, card_number, card_password, cvv, expiration_date, balance, currency, card_brand, card_type, status)
 VALUES
-('deposit',         1000.00, NULL, 1, 'Initial deposit', 'completed'),
-('transfer',         200.00, 1,    3, 'Payment for services', 'completed'),
-('cash withdrawal',   50.00, 2,   NULL, 'ATM withdrawal', 'completed'),
-('online payment',    30.00, 1,    2, 'Online shopping', 'pending'),
-('transfer', 150.00, 4, 1, 'Money send to Əli', 'completed');
+(3, '5333333333333333', '1111', '222', '2026-05-20', 1000.00, 'EUR', 'MASTERCARD', 'DEBIT', 'ACTIVE');
 
-select * from Card
---bu hisseye "select * from Card, Account ve s" yaziriq
-
+-- Insert Transactions (Mock History)
+INSERT INTO transaction_history (owner_card_id, from_card_number, to_card_number, from_customer_name, to_customer_name, amount, type, created_at)
+VALUES
+(1, 'CASH', '4111111111111111', 'ATM', 'Anar Nurayev', 50.00, 'DEPOSIT', NOW() - INTERVAL '1 day'),
+(1, '4111111111111111', 'Azercell', 'Anar Nurayev', 'Azercell', 10.00, 'PAYMENT', NOW() - INTERVAL '2 hour'),
+(2, '5111111111111111', '4222222222222222', 'Anar Nurayev', 'Ali Valiyev', 20.00, 'TRANSFER', NOW() - INTERVAL '30 minute');
