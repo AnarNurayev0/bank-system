@@ -1,14 +1,11 @@
 package bank.bank.entity;
 
 import lombok.Data;
-import java.util.Date;
 import java.math.BigDecimal;
 import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
+import bank.bank.entity.enums.*;
 import lombok.AllArgsConstructor;
-import bank.bank.entity.enums.CardType;
-import bank.bank.entity.enums.Currency;
-import bank.bank.entity.enums.CardBrand;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
@@ -23,34 +20,38 @@ public class Card {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "card_brand")
     private CardBrand cardBrand;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "card_type")
     private CardType cardType;
+
+    @Enumerated(EnumType.STRING)
+    private CardStatus status = CardStatus.ACTIVE;
 
     @Column(name = "card_number")
     private String cardNumber;
 
-    @Column(name = "cvv")
     private String cvv;
 
     @Column(name = "card_password")
     private String cardPassword;
 
-    @Column(name = "expiration_date")
-    private Date expirationDate;
+    private java.time.LocalDate expirationDate;
 
-    @Column(name = "balance")
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "currency")
     private Currency currency;
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
     @JsonIgnore
     private Customer customer;
+
+    @Column(nullable = false)
+    private BigDecimal creditLimit = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    private BigDecimal usedLimit = BigDecimal.ZERO;
+
 }

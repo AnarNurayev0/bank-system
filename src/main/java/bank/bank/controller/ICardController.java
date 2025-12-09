@@ -1,7 +1,8 @@
 package bank.bank.controller;
 
-import java.util.List;
 import bank.bank.dto.*;
+import java.util.List;
+import java.math.BigDecimal;
 import bank.bank.entity.TransactionHistory;
 
 public interface ICardController {
@@ -19,4 +20,10 @@ public interface ICardController {
     String verifyPinReset(DtoPinResetVerify request);
 
     String confirmPinReset(DtoPinResetConfirm request);
+
+    String payCreditDebt(String cardNumber, BigDecimal amount, String sourceCardNumber);
+
+    String getCreditDebt(String cardNumber);
+
+    String exportHistoryToPdf(Long cardId);
 }

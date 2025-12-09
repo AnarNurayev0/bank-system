@@ -2,9 +2,10 @@ package bank.bank.controller.impl;
 
 import java.util.List;
 import bank.bank.dto.*;
-import bank.bank.service.ICardService;
+import java.math.BigDecimal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import bank.bank.service.ICardService;
 import bank.bank.entity.TransactionHistory;
 import bank.bank.controller.ICardController;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,9 @@ public class CardControllerImpl implements ICardController {
 
     @Override
     @PostMapping("/create/{customerId}")
-    public DtoCard createCard(@PathVariable Long customerId, @RequestBody DtoCardIU dtoCardIU) {
+    public DtoCard createCard(
+            @PathVariable Long customerId,
+            @RequestBody DtoCardIU dtoCardIU) {
         return cardService.createCard(customerId, dtoCardIU);
     }
 
@@ -65,4 +68,22 @@ public class CardControllerImpl implements ICardController {
         return cardService.pay(request);
     }
 
+    @GetMapping("/credit/debt")
+    public String getCreditDebt(@RequestParam String cardNumber) {
+        return cardService.getCreditDebt(cardNumber);
+    }
+
+    @PostMapping("/credit/pay")
+    public String payCreditDebt(
+            @RequestParam String cardNumber,
+            @RequestParam BigDecimal amount,
+            @RequestParam String sourceCardNumber) {
+        return cardService.payCreditDebt(cardNumber, amount, sourceCardNumber);
+    }
+
+    @Override
+    @PostMapping("/history/{cardId}/export")
+    public String exportHistoryToPdf(@PathVariable Long cardId) {
+        return cardService.exportHistoryToPdf(cardId);
+    }
 }

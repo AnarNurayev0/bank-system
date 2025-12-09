@@ -1,11 +1,10 @@
 package bank.bank.dto;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
-import org.antlr.v4.runtime.misc.NotNull;
 import java.math.BigDecimal;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.DecimalMin;
 
 @Data
 public class DtoPayRequest {
@@ -17,11 +16,7 @@ public class DtoPayRequest {
     @NotBlank
     private String providerName;
 
-    @NotBlank
-    @Pattern(regexp = "^[0-9]{4}$")
-    private String cardPassword;
-
-    @NotNull
+    @jakarta.validation.constraints.NotNull
     @DecimalMin("1.00")
     private BigDecimal amount;
 }

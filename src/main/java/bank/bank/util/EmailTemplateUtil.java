@@ -12,7 +12,7 @@ public class EmailTemplateUtil {
         try {
             template = new String(Files.readAllBytes(Paths.get("src/main/resources/templates/email-template.html")));
         } catch (IOException e) {
-            throw new RuntimeException("E-poçt şablonu oxunarkən xəta baş verdi", e);
+            throw new RuntimeException("An error occurred while reading the email template", e);
         }
     }
 

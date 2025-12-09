@@ -1,8 +1,8 @@
 package bank.bank.entity;
 
-import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "pay_provider")

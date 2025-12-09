@@ -18,10 +18,6 @@ public class DtoWithdrawRequest {
     @Pattern(regexp = "^[0-9]{16}$", message = "Kart nömrəsi yalnız 16 rəqəmdən ibarət olmalıdır")
     private String fromCardNumber;
 
-    @NotBlank(message = "Kart şifrəsi boş ola bilməz")
-    @Pattern(regexp = "^[0-9]{4}$", message = "Kart şifrəsi yalnız 4 rəqəmdən ibarət olmalıdır")
-    private String cardPassword;
-
     @NotNull(message = "Məbləğ boş ola bilməz")
     @DecimalMin(value = "1.00", message = "Minimim göndərilə bilən məbləğ 1 AZN/USD/EUR olmalıdır")
     private BigDecimal amount;

@@ -9,5 +9,10 @@ public interface ICustomerService {
 
     DtoCustomer getCustomerById(Long id);
 
+    bank.bank.dto.DtoCustomer login(bank.bank.dto.DtoLoginRequest request);
+
+    String sendRegistrationOTP(String email);
+
+    String verifyRegistrationOTP(String email, String code);
 
 }

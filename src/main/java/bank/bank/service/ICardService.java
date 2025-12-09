@@ -1,6 +1,7 @@
 package bank.bank.service;
 
 import bank.bank.dto.*;
+import java.math.BigDecimal;
 
 public interface ICardService {
 
@@ -18,4 +19,9 @@ public interface ICardService {
 
     String pay(DtoPayRequest request);
 
+    String payCreditDebt(String cardNumber, BigDecimal amount, String sourceCardNumber);
+
+    String getCreditDebt(String cardNumber);
+
+    String exportHistoryToPdf(Long cardId);
 }
